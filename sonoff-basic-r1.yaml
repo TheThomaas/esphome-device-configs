@@ -1,0 +1,124 @@
+substitutions:
+  name: "sonoff-basic-r1"
+  friendly_name: "Sonoff Basic R1"
+  device_description: Sonoff DIY Smart Switch
+  factory_reset_disabled: "true"
+  log_level: "INFO"
+  
+  project_name: "sonoff.basic-r1"
+  project_version: "1.0"
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  comment: "${device_description}"
+  name_add_mac_suffix: true
+  project:
+    name: "${project_name}"
+    version: "${project_version}"
+  
+esp8266:
+  board: esp01_1m
+
+# Enable logging
+logger:
+  level: ${log_level}
+
+api:
+
+ota:
+  - platform: esphome
+
+dashboard_import:
+  package_import_url: git.thethomaas.net://thethomaas/esphome-device-configs/sonoff-basic-r1.yaml@main
+
+wifi:
+  ap: {} # This spawns an AP with the device name and mac address with no password.
+
+captive_portal:
+
+# Sets up Bluetooth LE (Only on ESP32) to allow the user
+# to provision wifi credentials to the device.
+# esp32_improv:
+#   authorizer: none
+
+# Sets up the improv via serial client for Wi-Fi provisioning
+# improv_serial:
+
+button:
+  - platform: restart
+    name: Restart
+    entity_category: config
+  - platform: safe_mode
+    internal: false
+    name: Safe mode
+    entity_category: config
+    disabled_by_default: true
+  - platform: factory_reset
+    name: Factory Reset
+    entity_category: config
+    disabled_by_default: true
+
+binary_sensor:
+  - platform: status
+    name: Status
+  - platform: gpio
+    pin:
+      number: GPIO0
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+    id: button_1
+    on_press:
+      - switch.toggle: relay
+
+switch:
+  - platform: template
+    id: turn_led_on
+    name: Turn LED On
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+  - platform: gpio
+    name: ${friendly_name} Relay
+    pin: GPIO12
+    id: relay
+    on_turn_on:
+      if:
+        condition:
+          switch.is_on: turn_led_on
+        then:
+          - light.turn_on: main_led
+    on_turn_off:
+      if:
+        condition:
+          switch.is_on: turn_led_on
+        then:
+          - light.turn_off: main_led
+
+light:
+  - platform: status_led
+    id: main_led
+    name: Status LED
+    entity_category: config
+    pin: 
+      number: GPIO13
+      inverted: true
+
+sensor:
+  - platform: wifi_signal
+    name: WiFi Signal
+    id: wifi_signal_db
+    update_interval: 60s
+    entity_category: diagnostic
+
+text_sensor:
+  - platform: wifi_info
+    entity_category: diagnostic
+    ip_address:
+      name: IP Address
+    ssid:
+      name: Connected SSID
+    mac_address:
+      name: MAC Address
