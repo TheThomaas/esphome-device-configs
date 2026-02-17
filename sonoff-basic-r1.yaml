@@ -115,10 +115,12 @@ sensor:
 
 text_sensor:
   - platform: wifi_info
-    entity_category: diagnostic
     ip_address:
       name: IP Address
+      entity_category: diagnostic
     ssid:
       name: Connected SSID
+      entity_category: diagnostic
     mac_address:
       name: MAC Address
+      entity_category: diagnostic
